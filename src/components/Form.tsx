@@ -1,21 +1,34 @@
-import { useState, ChangeEvent, Dispatch, FormEvent } from "react";
+import { useState, ChangeEvent, Dispatch, FormEvent, useEffect } from "react";
+import { v4 as uuidv4 } from 'uuid';
 import { categories } from "../data/categories"
 import { Activity } from "../types";
-import { ActivityActions } from "../reducers/activity-reducer";
+import { ActivityActions, ActivityState } from "../reducers/activity-reducer";
 
 type FormProps = { 
-    dispatch: Dispatch< ActivityActions >
+    dispatch: Dispatch< ActivityActions >,
+    state: ActivityState
+}
+const initialState: Activity = {
+    id: uuidv4(),
+    category: 1 ,
+    nameActivity: '',
+    calories: 0
 }
 
-function Form( { dispatch } : FormProps ) {
+function Form( { dispatch , state } : FormProps ) {
 
-    const [ activity , setActivity ] = useState<Activity>({
-        category: 0 ,
-        nameActivity: '',
-        calories: 0
-    });
+    const [ activity , setActivity ] = useState<Activity>( initialState );
+
+    useEffect(() => {
+        if( state.activeId ){ 
+            console.log("id seleccionado" , state.activeId )
+            const selectedActivity = state.activities.filter( activityState => activityState.id === state.activeId )[0];
+            setActivity( selectedActivity );
+        }
+    } , [ state.activeId ] );
 
     const handleChange = ( e: ChangeEvent<HTMLSelectElement> | ChangeEvent<HTMLInputElement>  ) => {
+        console.log( e.target.id );
         const isNumberField = ['category' , 'calories'].includes( e.target.id );
         setActivity( { 
             ...activity,
@@ -31,6 +44,9 @@ function Form( { dispatch } : FormProps ) {
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         dispatch({ type: 'save-activity' , payload: { newActivity: activity }})
+        setActivity( 
+            {...initialState , id: uuidv4() } 
+        );
     }
 
     return(  
@@ -78,7 +94,7 @@ function Form( { dispatch } : FormProps ) {
                 <input  
                         type="submit"
                         className="bg-gray-800 hover:bg-gray-900 w-full p-2 font-bold uppercase text-center text-white cursor-pointer disabled:opacity-10"
-                        value={activity.category == 1 ? 'Guardar comida' : 'Guaradar ejercicio'}
+                        value={activity.category == 1 ? 'Guardar comida' : 'Guardar ejercicio'}
                         disabled={ !isValidActivity() } />
             </form>
 
